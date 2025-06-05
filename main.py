@@ -1,12 +1,13 @@
 import asyncio
 import functools
-import random
-import time
-import requests
-from bs4 import BeautifulSoup, Tag
 import logging
+import time
 from pathlib import Path
 
+import requests
+from bs4 import BeautifulSoup, Tag
+
+from utils import ask_ai_for_image_name
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -26,16 +27,24 @@ async def main():
     )
 
 
-def timing(precision=2):
+def timing(precision=2, show_func_name=False, label=""):
+    """
+    装饰器，用于计算函数的执行时间。
+
+    ## Features
+    - 同步和异步函数均可使用。
+
+    :param func: 要装饰的函数
+    :param precision: 小数点后精度
+    :param show_func_name: 是否显示函数名
+    :param label: 自定义标签
+    """
+
     def decorator(func):
-        """
-        装饰器，用于计算函数的执行时间。
+        time_label = label or ((func.__name__ if show_func_name else "") + "耗时: ")
 
-        ## Features
-        - 同步和异步函数均可使用。
-
-        :param func: 要装饰的函数
-        """
+        def print_time(start_time, end_time):
+            print(f"{time_label}{end_time - start_time:.{precision}f} 秒")
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -43,7 +52,7 @@ def timing(precision=2):
             result = func(*args, **kwargs)
             end_time = time.perf_counter()
 
-            print(f"{func.__name__} 耗时: {end_time - start_time:.{precision}f} 秒")
+            print_time(start_time, end_time)
 
             return result
 
@@ -53,7 +62,7 @@ def timing(precision=2):
             result = await func(*args, **kwargs)
             end_time = time.perf_counter()
 
-            print(f"{func.__name__} 耗时: {end_time - start_time:.{precision}f} 秒")
+            print_time(start_time, end_time)
             return result
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
@@ -61,7 +70,7 @@ def timing(precision=2):
     return decorator
 
 
-@timing()
+@timing(label="下载耗时 ")
 async def init(url: str, selector: str, save_dir: str):
     if not url or not selector or not Path(save_dir).exists():
         logging.error(
@@ -101,11 +110,11 @@ async def init(url: str, selector: str, save_dir: str):
         for index, img in enumerate(imgs)
     ]
 
+    logging.info(f"⏳ Executing {len(tasks)} tasks concurrently 🤹...")
+
     await asyncio.gather(*tasks)
 
-
-async def askAiForImageName(img: str) -> str:
-    return f"test-{random.randint(1, 1000)}.jpg"
+    logging.info("🥳 Done.")
 
 
 async def download(img: Tag, index: int, save_dir: str) -> None:
@@ -116,7 +125,7 @@ async def download(img: Tag, index: int, save_dir: str) -> None:
         return
 
     img_url = str(img_url)
-    img_name = await askAiForImageName(str(img))
+    img_name = await ask_ai_for_image_name(str(img))
     logging.debug(f"{img_url, img_name}")
 
     full_path: Path = Path(save_dir) / img_name
@@ -125,9 +134,9 @@ async def download(img: Tag, index: int, save_dir: str) -> None:
         img_r = requests.get(img_url)
         with open(full_path, "wb") as f:
             f.write(img_r.content)
-        logging.info(f"✅ Downloaded #{index} {img_name}")
+        logging.info(f"✅ Downloaded #{index + 1} {img_name}")
     else:
-        logging.warning("❌", full_path, "already exists")
+        logging.warning("f❌ {full_path} already exists")
 
 
 if __name__ == "__main__":
