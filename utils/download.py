@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from pathlib import Path
 import random
 from bs4 import BeautifulSoup, Tag
@@ -22,9 +23,10 @@ async def download(img: Tag, index: int, save_dir: str) -> None:
     logging.debug(f"{img_url, img_name}")
 
     full_path: Path = Path(save_dir) / img_name
+
     if Path.exists(full_path):
         logging.info(f"{full_path} already exists")
-        full_path = Path(save_dir) / (str(random.randint(0, 100)) + "-" + img_name)
+        full_path = Path(save_dir) / gen_uniq_filename(img_name)
 
     logging.info(f"📥 {img_url} -> {full_path}")
     img_r = requests.get(img_url)
@@ -33,6 +35,14 @@ async def download(img: Tag, index: int, save_dir: str) -> None:
         f.write(img_r.content)
 
     logging.info(f"✅ Downloaded #{index + 1} {img_name}")
+
+
+def gen_uniq_filename(filename: str) -> str:
+    return gen_time() + "-" + filename
+
+
+def gen_time() -> str:
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
 @timing()
