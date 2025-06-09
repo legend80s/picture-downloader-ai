@@ -46,7 +46,18 @@ async def get_name(img: Tag, img_url: str) -> str:
     return img_name
 
 
-async def start(url: str, selector: str, save_dir: str, concurrency: int = 1):
+async def start(
+    url: str,
+    selector: str,
+    save_dir: str,
+    concurrency: int = 1,
+    verbose: bool = False,
+):
+    if verbose:
+        print(
+            f"🕷️ 将从页面 {url} 抓取符合 {selector} 的图片，保存到 {save_dir} 目录下，并发数为 {concurrency}"
+        )
+
     if not url or not selector or not Path(save_dir).exists():
         logger.error(
             "❌ url, imgs selector, and save_dir are required!"

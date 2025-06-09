@@ -12,6 +12,7 @@ class Config(TypedDict):
     selector: str
     save_dir: str
     concurrency: int
+    verbose: bool
 
 
 config: Config = {
@@ -19,7 +20,7 @@ config: Config = {
     "selector": "#newContent img",
     "save_dir": r"E:\download-2024-5-8\配图\temp\ai",
     "concurrency": 1,
-    # "verbose": True,
+    "verbose": True,
 }
 
 
