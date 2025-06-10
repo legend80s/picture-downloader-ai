@@ -1,6 +1,6 @@
 # picture-downloader-ai
 
-Use AI as 🖼️ picture namer.
+The Selling point: Use AI as 🖼️ picture namer.
 
 ## Usage
 
@@ -17,6 +17,8 @@ py main.py # uv run main.py
 
 ## 技术 Stack
 
+运行时
+
 - requests
 - beautifulsoup4
 - httpx
@@ -25,3 +27,22 @@ py main.py # uv run main.py
 - python-settings
 - pytest
 - [ ] loguru
+- [ ] argparse
+- [x] rich
+
+开发时
+
+- [x] uv
+- [x] ruff
+- [ ] mypy
+
+## TODO
+
+- [ ] 优化下载逻辑
+- [ ] 优化命名逻辑
+- [ ] 优化并发逻辑
+- [ ] 优化日志
+- [ ] 优化错误处理
+- [ ] 优化 UI
+- [ ] 优化测试
+- [ ] 优化文档

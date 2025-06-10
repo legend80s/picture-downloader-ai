@@ -1,13 +1,14 @@
 import json
 import textwrap
 from http import HTTPMethod
-from typing import TypedDict
+from typing import AsyncIterator, TypedDict
 
 import bs4
 import httpx
 
 from utils.env_settings import get_settings
 from utils.logging_config import logging
+from rich.progress import Progress
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,9 @@ class Img(TypedDict):
     data_src: str
 
 
-async def ask_ai_for_image_name(img: bs4.Tag | Img) -> str | None:
+async def ask_ai_for_image_name(
+    img: bs4.Tag | Img, filename: str, progress: Progress
+) -> str | None:
     """
     生成图片文件名，如果src本身名称已经具备描述性，则直接使用，否则根据alt生成摘要当做图片文件名，否则请看图取名字。
 
@@ -44,6 +47,14 @@ async def ask_ai_for_image_name(img: bs4.Tag | Img) -> str | None:
     """).strip()
 
     name: str = ""
+
+    # 创建子任务（单个文件的下载进度）
+    TOTAL_TOKENS = 10
+    naming_task = progress.add_task(
+        f"⏳ AI 正在给 {filename} 起名字...",
+        total=TOTAL_TOKENS,
+        # visible=True,
+    )
 
     # logger.info(f"{question=!r}")
 
@@ -100,6 +111,8 @@ async def ask_ai_for_image_name(img: bs4.Tag | Img) -> str | None:
     try:
         async for token in token_stream:
             name += token
+            progress.update(naming_task, advance=1)
+
     except EnhancedHTTPError as error:
         logger.error(f"🚫 {img=}")
 
@@ -119,6 +132,10 @@ async def ask_ai_for_image_name(img: bs4.Tag | Img) -> str | None:
         )
         return None
 
+    progress.update(
+        naming_task, description=f"✅ {filename} 取名完毕", completed=TOTAL_TOKENS
+    )
+
     return name
 
 
@@ -136,7 +153,7 @@ async def read_sse_stream(
     method: HTTPMethod,
     headers: dict | None = None,
     data: dict | None = None,
-):
+) -> AsyncIterator[str]:
     async with httpx.AsyncClient() as client:
         async with client.stream(method, url, headers=headers, json=data) as response:
             try:

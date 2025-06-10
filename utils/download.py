@@ -1,24 +1,39 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
-import random
-from bs4 import BeautifulSoup, Tag
+from typing import NamedTuple
+
 import requests
-from utils import ask_ai_for_image_name, extract_filename, timing
+from bs4 import BeautifulSoup, Tag
+from rich import print
+from rich.progress import Progress, TaskID
+
+from utils import ask_ai_for_image_name, extract_filename
+
 from .logging_config import logging
 
 logger = logging.getLogger(__name__)
 
 
-async def download(img: Tag, index: int, save_dir: str) -> None:
+class DownloadResult(NamedTuple):
+    img_name: str
+    img_url: str
+    full_path: Path
+
+
+async def download(
+    img: Tag, index: int, save_dir: str, progress: Progress
+) -> None | DownloadResult:
     img_url = img.get("data-src", img.get("src"))
+
+    # progress.console.print(f"Working on job #{index + 1}...")
 
     if not img_url:
         logging.warning(f"🚫 #{index + 1} no src found", img)
         return
 
     img_url = str(img_url)
-    img_name = await get_name(img, img_url)
+    img_name = await get_name(img, img_url, progress)
 
     logging.debug(f"{img_url, img_name}")
 
@@ -26,29 +41,35 @@ async def download(img: Tag, index: int, save_dir: str) -> None:
 
     if Path.exists(full_path):
         logging.info(f"{full_path} already exists")
-        full_path = Path(save_dir) / gen_uniq_filename(img_name)
+        img_name = gen_uniq_filename(img_name)
 
-    logging.info(f"📥 {img_url} -> {full_path}")
+    full_path: Path = Path(save_dir) / img_name
+
+    logging.debug(f"📥 {img_url} -> {full_path}")
     img_r = requests.get(img_url)
 
     with open(full_path, "wb") as f:
         f.write(img_r.content)
 
-    logging.info(f"✅ Downloaded #{index + 1} {img_name}")
+    return DownloadResult(img_name, img_url, full_path)
 
 
 def gen_uniq_filename(filename: str) -> str:
-    return gen_time() + "-" + filename
+    stem = Path(filename).stem
+    suffix = Path(filename).suffix
+
+    return stem + "-" + gen_time() + suffix
 
 
 def gen_time() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
-@timing()
-async def get_name(img: Tag, img_url: str) -> str:
+# @timing()
+async def get_name(img: Tag, img_url: str, progress: Progress) -> str:
     img_url = str(img_url)
-    img_name = await ask_ai_for_image_name(img) or extract_filename(img_url)
+    filename = extract_filename(img_url)
+    img_name = await ask_ai_for_image_name(img, filename, progress) or filename
 
     # 发送频率过高，请稍后再试.
     # await asyncio.sleep(0.5)
@@ -61,26 +82,15 @@ async def start(
     selector: str,
     save_dir: str,
     concurrency: int = 1,
-    verbose: bool = False,
-):
-    if verbose:
-        print(
-            f"🕷️ 将从页面 {url} 抓取符合 {selector} 的图片，保存到 {save_dir} 目录下，并发数为 {concurrency}"
-        )
-
+) -> list[DownloadResult | None] | None:
     if not url or not selector or not Path(save_dir).exists():
-        logger.error(
-            "❌ url, imgs selector, and save_dir are required!"
-            + " "
-            + str(
-                {
-                    "url": url,
-                    "selector": selector,
-                    "save_dir": save_dir,
-                    "save_dir_exists?": Path(save_dir).exists(),
-                }
-            )
-        )
+        details = {
+            "url": url,
+            "selector": selector,
+            "save_dir": save_dir,
+            "save_dir_exists?": Path(save_dir).exists(),
+        }
+        logger.error(f"❌ url, imgs selector, and save_dir are required! {details}")
         return
 
     headers = {
@@ -100,18 +110,39 @@ async def start(
         return
 
     img_count = len(imgs)
-    logger.info(f"found {img_count} images.")
+    info = f"Found {img_count} images."
+    print(f"{info:^160}")
 
     semaphore = asyncio.Semaphore(concurrency)
 
-    async def worker(semaphore: asyncio.Semaphore, img: Tag, index: int, save_dir: str):
+    async def worker(
+        semaphore: asyncio.Semaphore,
+        img: Tag,
+        index: int,
+        save_dir: str,
+        task: TaskID,
+        progress: Progress,
+    ):
         async with semaphore:
-            await download(img, index, save_dir)
+            result = await download(img, index, save_dir, progress)
 
-    tasks = [worker(semaphore, img, index, save_dir) for index, img in enumerate(imgs)]
+            logger.info(f"Downloaded {index}")
+            progress.update(task, advance=1)
+            return result
 
-    logger.info(f"⏳ Executing {len(tasks)} tasks with concurrency {concurrency} 🤹...")
+    with Progress() as progress:
+        task1 = progress.add_task("⏳ Downloading...", total=img_count)
+        tasks = [
+            worker(semaphore, img, index, save_dir, task1, progress)
+            for index, img in enumerate(imgs)
+        ]
 
-    await asyncio.gather(*tasks)
+        logger.info(
+            f"⏳ Executing {len(tasks)} tasks with concurrency {concurrency} 🤹..."
+        )
 
-    logger.info("🎉 All Done.")
+        results = await asyncio.gather(*tasks)
+
+        progress.update(task1, description="🎉 Downloaded")
+
+        return results
