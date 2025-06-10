@@ -114,7 +114,7 @@ async def ask_ai_for_image_name(
             progress.update(naming_task, advance=1)
 
     except EnhancedHTTPError as error:
-        logger.error(f"🚫 {img=}")
+        logger.error(f"🚫 {error.response_text} {img=}")
 
         status_code = error.original_error.response.status_code
         url = error.original_error.request.url

@@ -1,6 +1,8 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
+import random
+import time
 from typing import NamedTuple
 
 import requests
@@ -77,6 +79,20 @@ async def get_name(img: Tag, img_url: str, progress: Progress) -> str:
     return img_name
 
 
+def sleep_gap_factory(*, gap: float, iters: int = 100_0000):
+    sleep_gaps = iter([round(x * gap, 3) for x in range(0, iters)])
+
+    async def sleep():
+        gap = next(sleep_gaps)
+        # print("sleep", gap)
+        await asyncio.sleep(gap)
+
+    return sleep
+
+
+sleep_gap = sleep_gap_factory(gap=0.3)
+
+
 async def start(
     url: str,
     selector: str,
@@ -124,6 +140,12 @@ async def start(
         progress: Progress,
     ):
         async with semaphore:
+            # start_time = time.perf_counter()
+            await sleep_gap()
+            # end_time = time.perf_counter()
+
+            # print(f"{(end_time - start_time):.2f} s")
+
             result = await download(img, index, save_dir, progress)
 
             logger.info(f"Downloaded {index}")
@@ -146,3 +168,15 @@ async def start(
         progress.update(task1, description="🎉 Downloaded")
 
         return results
+
+
+if __name__ == "__main__":
+    # print(random.uniform(0.0, 1.1))
+    # numbers = [round(x * 0.1, 1) for x in range(0, 101)]
+    # print(numbers)
+    # print((float("inf")))
+    print(int(float("inf")))
+    # sleep_gap = sleep_gap_factory(0.05)
+
+    # for _ in range(10):
+    #     sleep_gap()

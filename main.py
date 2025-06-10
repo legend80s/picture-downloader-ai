@@ -23,7 +23,7 @@ config: Config = {
     "url": "https://www.zcool.com.cn/work/ZNjIzODY0Njg=.html",
     "selector": "#newContent img",
     "save_dir": r"E:\download-2024-5-8\配图\temp\ai",
-    "concurrency": 1,
+    "concurrency": 3,
     "verbose": True,
 }
 
