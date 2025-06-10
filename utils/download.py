@@ -80,7 +80,7 @@ async def get_name(img: Tag, img_url: str, progress: Progress) -> str:
 
 
 def sleep_gap_factory(*, gap: float, iters: int = 100_0000):
-    sleep_gaps = iter([round(x * gap, 3) for x in range(0, iters)])
+    sleep_gaps = (round(x * gap, 3) for x in range(0, iters))
 
     async def sleep():
         gap = next(sleep_gaps)
