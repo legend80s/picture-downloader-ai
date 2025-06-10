@@ -5,6 +5,7 @@ import random
 import time
 from typing import NamedTuple
 
+import httpx
 import requests
 from bs4 import BeautifulSoup, Tag
 from rich import print
@@ -93,6 +94,19 @@ def sleep_gap_factory(*, gap: float, iters: int = 100_0000):
 sleep_gap = sleep_gap_factory(gap=0.3)
 
 
+async def crawl_html(url: str) -> str:
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+    }
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers=headers)
+        html = r.text
+
+    # print("HTML:", html)
+
+    return html
+
+
 async def start(
     url: str,
     selector: str,
@@ -109,12 +123,7 @@ async def start(
         logger.error(f"❌ url, imgs selector, and save_dir are required! {details}")
         return
 
-    headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-    }
-    r = requests.get(url, headers=headers)
-    html = r.text
-    # print("HTML:", html)
+    html = await crawl_html(url)
     soup = BeautifulSoup(html, "html.parser")
 
     imgs = soup.css.select(selector)

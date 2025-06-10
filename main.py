@@ -22,14 +22,6 @@ class Config(TypedDict):
     verbose: bool
 
 
-config: Config = {
-    "url": "https://www.zcool.com.cn/work/ZNjIzODY0Njg=.html",
-    "selector": "#newContent img",
-    "save_dir": r"E:\download-2024-5-8\配图\temp\ai",
-    "concurrency": 3,
-    "verbose": True,
-}
-
 console = Console()
 
 parser = argparse.ArgumentParser()
@@ -57,11 +49,11 @@ args = parser.parse_args()
 async def main():
     print(f"{' Hello from image-downloader-ai-namer! ':=^160}")
 
-    verbose = args.verbose or config["verbose"]
-    url = args.url or config["url"]
-    selector = args.selector or config["selector"]
-    save_dir = args.output_dir or config["save_dir"]
-    concurrency = args.concurrency or config["concurrency"]
+    verbose = args.verbose
+    url = args.url
+    selector = args.selector
+    save_dir = args.output_dir
+    concurrency = args.concurrency
 
     if verbose:
         print(

@@ -11,8 +11,8 @@ The Selling point: Use AI as 🖼️ picture namer.
 2. 运行
 
 ```bash
-# uv run main.py
-py main.py --url='https://juejin.cn/' --selector='.content-wrapper img' --output-dir='E:\download-2024-5-8\配图\temp\ai' 
+# py main.py
+uv run main.py --output-dir='E:\download-2024-5-8\配图\temp\ai' --url='https://www.python-httpx.org/' --selector='.md-content img'
 ```
 
 因为默认使用 Kimi AI 智能命名图片。会增加一些时间，如果不需要可以设置 `--not-use-ai-naming`，而且并发度不能太大（默认 `--concurrency=1`），否则会触发 Kimi 的 rate limit 机制。
@@ -45,11 +45,14 @@ py main.py --url='https://juejin.cn/' --selector='.content-wrapper img' --output
 
 ## TODO
 
-- [ ] 优化下载逻辑
-- [ ] 优化命名逻辑
-- [ ] 优化并发逻辑
-- [ ] 优化日志
-- [ ] 优化错误处理
-- [ ] 优化 UI
-- [ ] 优化测试
-- [ ] 优化文档
+- [x] 优化下载逻辑
+- [x] 优化命名逻辑
+- [x] 优化并发逻辑
+- [x] 优化日志 logging -> 使用 loguru
+- [x] 优化错误处理
+- [x] 优化 UI
+- [x] 增加测试
+- [x] 优化文档
+- [ ] 能抓取单页应用网站
+- [x] 增加命令行参数
+- [x] 增加 .env 配置文件
