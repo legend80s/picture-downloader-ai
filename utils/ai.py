@@ -133,7 +133,9 @@ async def ask_ai_for_image_name(
         return None
 
     progress.update(
-        naming_task, description=f"✅ {filename} 取名完毕", completed=TOTAL_TOKENS
+        naming_task,
+        description=f"✅ {filename} 取名完毕，开始下载",
+        completed=TOTAL_TOKENS,
     )
 
     return name

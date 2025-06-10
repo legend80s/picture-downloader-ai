@@ -121,13 +121,13 @@ async def start(
 
     if len(imgs) == 0:
         logger.warning("No images found.")
-        print(soup.getText(strip=True))
+        print("Web Page text:", soup.getText(strip=True), sep="\n")
 
         return
 
     img_count = len(imgs)
     info = f"Found {img_count} images."
-    print(f"{info:^160}")
+    print(f"{info:^160}\n")
 
     semaphore = asyncio.Semaphore(concurrency)
 
