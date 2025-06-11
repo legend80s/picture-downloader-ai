@@ -1,4 +1,4 @@
-from .url import extract_filename
+from .url import extract_filename, get_full_url
 
 
 def test_extract_filename():
@@ -7,3 +7,26 @@ def test_extract_filename():
 
     assert extract_filename(url1) == "01vttarjy7ow5sdayn6tah3731.jpg"
     assert extract_filename(url2) == "foo.png"
+
+
+def test_get_full_url():
+    assert (
+        get_full_url("https://www.python-httpx.org/", "/img/httpx-help.png")
+        == "https://www.python-httpx.org/img/httpx-help.png"
+    )
+    assert (
+        get_full_url("https://www.python-httpx.org/docs/", "img/httpx-help.png")
+        == "https://www.python-httpx.org/docs/img/httpx-help.png"
+    )
+    assert (
+        get_full_url("https://www.python-httpx.org", "img/httpx-help.png")
+        == "https://www.python-httpx.org/img/httpx-help.png"
+    )
+
+    assert (
+        get_full_url(
+            "https://www.python-httpx.org",
+            "https://www.python-httpx.org/img/httpx-help.png",
+        )
+        == "https://www.python-httpx.org/img/httpx-help.png"
+    )

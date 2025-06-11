@@ -1,8 +1,6 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
-import random
-import time
 from typing import NamedTuple
 
 import httpx
@@ -14,6 +12,7 @@ from rich.progress import Progress, TaskID
 from utils import ask_ai_for_image_name, extract_filename
 
 from .logging_config import logging
+from .url import get_full_url
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ class DownloadResult(NamedTuple):
 
 
 async def download(
-    img: Tag, index: int, save_dir: str, progress: Progress
+    img: Tag, index: int, save_dir: str, progress: Progress, url: str
 ) -> None | DownloadResult:
     img_url = img.get("data-src", img.get("src"))
 
@@ -49,6 +48,9 @@ async def download(
     full_path: Path = Path(save_dir) / img_name
 
     logging.debug(f"📥 {img_url} -> {full_path}")
+
+    img_url = get_full_url(url, img_url)
+
     img_r = requests.get(img_url)
 
     with open(full_path, "wb") as f:
@@ -147,6 +149,7 @@ async def start(
         save_dir: str,
         task: TaskID,
         progress: Progress,
+        url: str,
     ):
         async with semaphore:
             # start_time = time.perf_counter()
@@ -155,7 +158,7 @@ async def start(
 
             # print(f"{(end_time - start_time):.2f} s")
 
-            result = await download(img, index, save_dir, progress)
+            result = await download(img, index, save_dir, progress, url)
 
             logger.info(f"Downloaded {index}")
             progress.update(task, advance=1)
@@ -164,7 +167,7 @@ async def start(
     with Progress() as progress:
         task1 = progress.add_task("⏳ Downloading...", total=img_count)
         tasks = [
-            worker(semaphore, img, index, save_dir, task1, progress)
+            worker(semaphore, img, index, save_dir, task1, progress, url)
             for index, img in enumerate(imgs)
         ]
 
