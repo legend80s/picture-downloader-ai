@@ -1,8 +1,10 @@
 import argparse
 import asyncio
 from pathlib import Path
+import sys
 from typing import TypedDict
 
+import httpx
 from rich import print
 from rich.console import Console
 
@@ -76,7 +78,12 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except httpx.ConnectError as e:
+        logger.error(f"{e}. {e.request}")
+        sys.exit(1)
+
     # info = f"Found {7} images."
     # print(f"{info:^160}")
 

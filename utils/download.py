@@ -100,6 +100,7 @@ async def crawl_html(url: str) -> str:
     headers = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
     }
+
     async with httpx.AsyncClient() as client:
         r = await client.get(url, headers=headers)
         html = r.text
