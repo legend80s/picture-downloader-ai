@@ -3,6 +3,7 @@ from .url import extract_filename
 from .timing import timing
 from .download import start
 from .env_settings import get_settings
+from .logger import logger
 
 __all__ = [
     "ask_ai_for_image_name",
@@ -10,4 +11,5 @@ __all__ = [
     "timing",
     "start",
     "get_settings",
+    "logger",
 ]

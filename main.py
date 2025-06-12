@@ -6,6 +6,7 @@ from typing import TypedDict
 
 import httpx
 from loguru import logger
+import requests
 from rich import print
 from rich.console import Console
 
@@ -83,6 +84,11 @@ if __name__ == "__main__":
         asyncio.run(main())
     except httpx.ConnectError as e:
         logger.error(f"{e}. {e.request}")
+        sys.exit(1)
+    except requests.exceptions.ConnectionError as e:
+        logger.error(
+            f"{f'{e.request.method} {e.request.url}' if e.request else e.request} failed: {e}"
+        )
         sys.exit(1)
 
     # info = f"Found {7} images."

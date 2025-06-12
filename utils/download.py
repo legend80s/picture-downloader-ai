@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import NamedTuple
 
 import httpx
-from loguru import logger
 import requests
 from bs4 import BeautifulSoup, Tag
 from rich import print
@@ -14,8 +13,9 @@ from utils import ask_ai_for_image_name, extract_filename
 
 # from .logging_config import logging
 from .url import get_full_url
+from .logger import logger
 
-# logger = logging.getLogger(__name__)
+# logger = logger.getLogger(__name__)
 
 
 class DownloadResult(NamedTuple):
@@ -32,23 +32,23 @@ async def download(
     # progress.console.print(f"Working on job #{index + 1}...")
 
     if not img_url:
-        logging.warning(f"🚫 #{index + 1} no src found", img)
+        logger.warning(f"🚫 #{index + 1} no src found", img)
         return
 
     img_url = str(img_url)
     img_name = await get_name(img, img_url, progress)
 
-    logging.debug(f"{img_url, img_name}")
+    logger.debug(f"{img_url, img_name}")
 
     full_path: Path = Path(save_dir) / img_name
 
     if Path.exists(full_path):
-        logging.info(f"{full_path} already exists")
+        logger.info(f"{full_path} already exists")
         img_name = gen_uniq_filename(img_name)
 
     full_path: Path = Path(save_dir) / img_name
 
-    logging.debug(f"📥 {img_url} -> {full_path}")
+    logger.debug(f"📥 {img_url} -> {full_path}")
 
     img_url = get_full_url(url, img_url)
 
@@ -173,9 +173,7 @@ async def start(
             for index, img in enumerate(imgs)
         ]
 
-        logger.info(
-            f"⏳ Executing {len(tasks)} tasks with concurrency {concurrency} 🤹..."
-        )
+        print(f"⏳ Executing {len(tasks)} tasks with concurrency {concurrency} 🤹...")
 
         results = await asyncio.gather(*tasks)
 

@@ -6,10 +6,10 @@ from typing import AsyncIterator, TypedDict
 
 import bs4
 import httpx
-from loguru import logger
 from rich.progress import Progress
 
 from utils.env_settings import get_settings
+from .logger import logger
 # from utils.logging_config import logging
 
 # logger = logging.getLogger(__name__)
@@ -164,6 +164,7 @@ async def read_sse_stream(
                     if data["event"] == "cmpl":
                         yield data["text"]
                     if "error" in data:
+                        logger.error("error while reading stream", data)
                         raise Exception(data["error"]["message"])
 
 
