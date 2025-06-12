@@ -34,9 +34,12 @@ uv run main.py --output-dir='E:\download-2024-5-8\配图\temp\ai' --url='https:/
 - pydantic
 - python-settings
 - pytest
-- [ ] loguru
+- loguru
 - [ ] argparse
 - [x] rich
+- [ ] typer
+- [ ] click
+- [ ] fire
 
 开发时
 
@@ -56,6 +59,6 @@ uv run main.py --output-dir='E:\download-2024-5-8\配图\temp\ai' --url='https:/
 - [x] 增加测试
 - [x] 优化文档
 - [ ] ~~能抓取 SPA（Single Page Application） 单页应用网站。不支持 SPA 否则要引入 Selenium，就和这个工具的初衷背道而驰了。~~
-- [x] 增加命令行参数
+- [x] 增加命令行参数，变成 CLI APP
 - [x] 增加 .env 配置文件
 - [ ] 判断如果已经是单词则不使用 AI 命名

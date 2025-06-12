@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import httpx
+from loguru import logger
 import requests
 from bs4 import BeautifulSoup, Tag
 from rich import print
@@ -11,10 +12,10 @@ from rich.progress import Progress, TaskID
 
 from utils import ask_ai_for_image_name, extract_filename
 
-from .logging_config import logging
+# from .logging_config import logging
 from .url import get_full_url
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class DownloadResult(NamedTuple):

@@ -5,15 +5,16 @@ import sys
 from typing import TypedDict
 
 import httpx
+from loguru import logger
 from rich import print
 from rich.console import Console
 
 
 from utils import start as start_download
 from utils import timing
-from utils.logging_config import logging
+# from utils.logging_config import logging
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class Config(TypedDict):

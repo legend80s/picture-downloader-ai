@@ -6,12 +6,14 @@ from typing import AsyncIterator, TypedDict
 
 import bs4
 import httpx
+from loguru import logger
 from rich.progress import Progress
 
 from utils.env_settings import get_settings
-from utils.logging_config import logging
+# from utils.logging_config import logging
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+
 
 settings = get_settings()
 
