@@ -11,8 +11,7 @@ from rich import print
 from rich.console import Console
 
 
-from utils import start as start_download
-from utils import timing
+from utils import timing, start as start_download
 # from utils.logging_config import logging
 
 # logger = logging.getLogger(__name__)
@@ -49,9 +48,9 @@ parser.add_argument("-v", "--verbose", action="store_true")
 args = parser.parse_args()
 
 
-@timing(label="总耗时 ")
+@timing(customizeLabel=lambda time: f"总耗时：{time:.2f} 秒\n")
 async def main():
-    print(f"{' Hello from image-downloader-ai-namer! ':=^160}")
+    print(f"\n{' Hello from image-downloader-ai-namer ':^160}\n")
 
     verbose = args.verbose
     url = args.url
@@ -71,10 +70,13 @@ async def main():
         concurrency=concurrency,
     )
 
-    if result is not None:
-        list = [item.img_name for item in result if item is not None]
+    if result is None:
+        # logger.error("🤔 没有找到任何图片")
+        return
 
-        print(f"Picture list ({len(list)}):", list)
+    list = [item.img_name for item in result if item is not None]
+
+    print(f"Picture list ({len(list)}):", list)
 
     logger.info("🎉 All Done.")
 
@@ -83,12 +85,15 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except httpx.ConnectError as e:
-        logger.error(f"{e}. {e.request}")
+        logger.error(f"{e.request} failed: {e}")
         sys.exit(1)
     except requests.exceptions.ConnectionError as e:
         logger.error(
             f"{f'{e.request.method} {e.request.url}' if e.request else e.request} failed: {e}"
         )
+        sys.exit(1)
+    except httpx.ReadTimeout as e:
+        logger.error(f"{e.request} timeout: {e}")
         sys.exit(1)
 
     # info = f"Found {7} images."

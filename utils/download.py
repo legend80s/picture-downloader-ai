@@ -133,8 +133,7 @@ async def start(
     imgs = soup.css.select(selector)
 
     if len(imgs) == 0:
-        logger.warning("No images found.")
-        print("Web Page text:", soup.getText(strip=True), sep="\n")
+        logger.warning(f"🤔 没有找到任何图片，请检查选择器是否正确 {selector=} {url=}")
 
         return
 

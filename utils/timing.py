@@ -1,9 +1,14 @@
 import asyncio
 import functools
 import time
+from typing import Any, Callable
 
 
-def timing(precision=2, show_func_name=True, label=""):
+def timing(
+    precision: int = 2,
+    show_func_name: bool = True,
+    customizeLabel: None | Callable[[float], str] = None,
+):
     """
     装饰器，用于计算函数的执行时间。
 
@@ -16,13 +21,19 @@ def timing(precision=2, show_func_name=True, label=""):
     :param label: 自定义标签
     """
 
-    def decorator(func):
-        time_label = label or (
-            (func.__name__ + " " if show_func_name else "") + "耗时: "
-        )
-
+    def decorator(func: Callable[..., Any]):
         def print_time(start_time, end_time):
-            print(f"{time_label}{end_time - start_time:.{precision}f} 秒")
+            time = end_time - start_time
+            tips = ""
+
+            if customizeLabel is not None:
+                tips = customizeLabel(time)
+            else:
+                time_label = (func.__name__ + " " if show_func_name else "") + "耗时: "
+
+                tips = f"{time_label}{time:.{precision}f} 秒"
+
+            print(tips)
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
