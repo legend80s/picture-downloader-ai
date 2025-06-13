@@ -1,5 +1,5 @@
 [project]
-name = "image-downloader-ai-namer"
+name = "picture-downloader-ai-namer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -14,7 +14,13 @@ dependencies = [
 ]
 
 [dependency-groups]
+cli = [
+    "typer>=0.16.0",
+]
 dev = [
     "pytest>=8.4.0",
     "ruff>=0.11.13",
 ]
+
+[project.scripts]
+test = "pytest"

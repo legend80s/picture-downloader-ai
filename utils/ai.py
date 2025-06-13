@@ -55,11 +55,13 @@ async def ask_ai_for_image_name(
 
     # 创建子任务（单个文件的下载进度）
     TOTAL_TOKENS = 10
-    naming_task = progress and progress.add_task(
-        f"⏳ AI 正在给 {filename} 起名字...",
-        total=TOTAL_TOKENS,
-        # visible=True,
-    )
+    # naming_task = progress and progress.add_task(
+    #     f"⏳ AI 正在给 {filename} 起名字...",
+    #     total=TOTAL_TOKENS,
+    #     # visible=True,
+    # )
+
+    print(f"⏳ AI 正在给 {filename} 起名字...", end=" ")
 
     verbose and logger.info(f"{question=!r}")  # type: ignore
 
@@ -96,7 +98,7 @@ async def ask_ai_for_image_name(
     try:
         async for token in token_stream:
             name += token
-            progress and naming_task and progress.update(naming_task, advance=1)  # type: ignore
+            # progress and naming_task and progress.update(naming_task, advance=1)  # type: ignore
             verbose and print(token)  # type: ignore
 
     except EnhancedHTTPError as error:
@@ -118,11 +120,13 @@ async def ask_ai_for_image_name(
         )
         return None
 
-    progress and naming_task and progress.update(
-        naming_task,
-        description=f"✅ {filename} 取名 🤰 {name} 完毕，开始下载",
-        completed=TOTAL_TOKENS,
-    )  # type: ignore
+    # progress and naming_task and progress.update(
+    #     naming_task,
+    #     description=f"✅ {filename} 取名 🤰 {name} 完毕，开始下载",
+    #     completed=TOTAL_TOKENS,
+    # )  # type: ignore
+
+    print(f"✅ 取名 🤰 {name} 完毕，开始下载")
 
     return name
 
@@ -164,8 +168,8 @@ async def read_sse_stream(
                     if data["event"] == "cmpl":
                         yield data["text"]
                     if "error" in data:
-                        logger.error("error while reading stream", data)
-                        raise Exception(data["error"]["message"])
+                        # logger.error("error while reading stream", data)
+                        raise Exception(data["error"])
 
 
 async def main():

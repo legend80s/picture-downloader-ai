@@ -11,9 +11,11 @@ from rich.progress import Progress, TaskID
 
 from utils import ask_ai_for_image_name, extract_filename
 
+from .logger import logger
+from .cli_args import get_args
+
 # from .logging_config import logging
 from .url import get_full_url
-from .logger import logger
 
 # logger = logger.getLogger(__name__)
 
@@ -25,7 +27,7 @@ class DownloadResult(NamedTuple):
 
 
 async def download(
-    img: Tag, index: int, save_dir: str, progress: Progress, url: str
+    img: Tag, index: int, save_dir: str, progress: Progress, url: str, ai_naming: bool
 ) -> None | DownloadResult:
     img_url = img.get("data-src", img.get("src"))
 
@@ -36,14 +38,14 @@ async def download(
         return
 
     img_url = str(img_url)
-    img_name = await get_name(img, img_url, progress)
+    img_name = await get_name(img, img_url, progress, ai_naming=ai_naming)
 
     logger.debug(f"{img_url, img_name}")
 
     full_path: Path = Path(save_dir) / img_name
 
     if Path.exists(full_path):
-        logger.info(f"{full_path} already exists")
+        logger.debug(f"{full_path} already exists")
         img_name = gen_uniq_filename(img_name)
 
     full_path: Path = Path(save_dir) / img_name
@@ -72,9 +74,14 @@ def gen_time() -> str:
 
 
 # @timing()
-async def get_name(img: Tag, img_url: str, progress: Progress) -> str:
+async def get_name(img: Tag, img_url: str, progress: Progress, ai_naming: bool) -> str:
     img_url = str(img_url)
     filename = extract_filename(img_url)
+
+    # for performance
+    if not ai_naming:
+        return filename
+
     img_name = await ask_ai_for_image_name(img, filename, progress) or filename
 
     # 发送频率过高，请稍后再试.
@@ -111,12 +118,16 @@ async def crawl_html(url: str) -> str:
     return html
 
 
-async def start(
-    url: str,
-    selector: str,
-    save_dir: str,
-    concurrency: int = 1,
-) -> list[DownloadResult | None] | None:
+async def start() -> list[DownloadResult | None] | None:
+    args = get_args()
+
+    url = args.url
+    selector = args.selector
+    save_dir = args.output_dir
+    concurrency = args.concurrency
+    ai_naming = args.ai_naming
+    count = args.count
+
     if not url or not selector or not Path(save_dir).exists():
         details = {
             "url": url,
@@ -132,13 +143,23 @@ async def start(
 
     imgs = soup.css.select(selector)
 
-    if len(imgs) == 0:
+    if (img_count := len(imgs)) == 0:
         logger.warning(f"🤔 没有找到任何图片，请检查选择器是否正确 {selector=} {url=}")
 
         return
 
-    img_count = len(imgs)
-    info = f"Found {img_count} images."
+    if count and count > img_count:
+        count = img_count
+
+    info = (
+        f"找到 {img_count} 张图片。"
+        if count is None
+        else f"找到 {img_count} 张图片，抓取前 {count} 张。"
+    )
+
+    if count is not None:
+        imgs = imgs[:count]
+
     print(f"{info:^160}\n")
 
     semaphore = asyncio.Semaphore(concurrency)
@@ -159,14 +180,14 @@ async def start(
 
             # print(f"{(end_time - start_time):.2f} s")
 
-            result = await download(img, index, save_dir, progress, url)
+            result = await download(img, index, save_dir, progress, url, ai_naming)
 
-            logger.info(f"Downloaded {index}")
+            logger.debug(f"Downloaded {index}")
             progress.update(task, advance=1)
             return result
 
     with Progress() as progress:
-        task1 = progress.add_task("⏳ Downloading...", total=img_count)
+        task1 = progress.add_task("⏳ Downloading...", total=len(imgs))
         tasks = [
             worker(semaphore, img, index, save_dir, task1, progress, url)
             for index, img in enumerate(imgs)
